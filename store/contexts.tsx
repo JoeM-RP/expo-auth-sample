@@ -17,6 +17,7 @@ import {
     TokenResponse,
     dismiss as dismissAuth,
     AuthSessionResult,
+    fetchUserInfoAsync,
 } from "expo-auth-session";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -37,7 +38,7 @@ const TENANT_ID = process.env.EXPO_PUBLIC_TENANT_ID || ""; // directory id
 const CLIENT_ID = process.env.EXPO_PUBLIC_CLIENT_ID || ""; // application id
 const SCOPES =
     process.env.EXPO_PUBLIC_SCOPES ||
-    `api://${CLIENT_ID}/user_impersonation offline_access`;
+    `email offline_access openid profile`;
 
 const ROOT = "https://login.microsoftonline.us";
 const DISCOVERY_URI = `${ROOT}/${TENANT_ID}/v2.0`;
@@ -161,12 +162,6 @@ export function SessionProvider(props: React.PropsWithChildren) {
 
         console.debug("[context] Checking token validity & fetching user info...");
         await checkTokenValidity();
-
-
-        // TODO: get/set user info
-        console.warn("TODO: get/set user info")
-        // const who = await getUserInfoAsync();
-        // setUserInfo(who);
     };
 
     useEffect(() => {
@@ -419,6 +414,12 @@ export function SessionProvider(props: React.PropsWithChildren) {
                 await refreshSessionAsync();
             }
         }
+
+        // TODO
+        const who = await fetchUserInfoAsync({ accessToken: session! }, discovery!);
+        setUserInfo(who);
+        console.info(who);
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sessionIssuedDate, sessionExpiry, refreshSessionAsync]);
 
