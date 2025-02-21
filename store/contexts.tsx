@@ -30,6 +30,7 @@ import {
 } from "./storeValues";
 import { Alert, Platform } from "react-native";
 import { setAccessToken } from "@/services";
+import { EntraUser } from "@/types";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -120,7 +121,7 @@ export function SessionProvider(props: React.PropsWithChildren) {
     const [[, sessionIssuedDate], setSessionIssuedDate] =
         useStorageState(SESS_ISSUED);
 
-    const [userInfo, setUserInfo] = React.useState<any | null>(null);
+    const [userInfo, setUserInfo] = React.useState<EntraUser | null>(null);
 
     const router = useRouter();
 
@@ -415,10 +416,16 @@ export function SessionProvider(props: React.PropsWithChildren) {
             }
         }
 
-        // TODO
         const who = await fetchUserInfoAsync({ accessToken: session! }, discovery!);
-        setUserInfo(who);
-        console.info(who);
+        if (who.error) {
+            const e = who.error as Error;
+            console.warn(e.message);
+        } else { 
+            const u = who as EntraUser;
+            
+            setUserInfo(u);
+            console.debug("[context] Set user info. Welcome, " + u.given_name)
+        }
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sessionIssuedDate, sessionExpiry, refreshSessionAsync]);

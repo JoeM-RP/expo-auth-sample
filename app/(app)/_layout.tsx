@@ -58,15 +58,6 @@ export default function RootLayout() {
       console.debug(
         `[(app)/_layout] Checking session: Has token: ${session ? true : false}, Lifetime: ${sessionExpiry}s, Issued: ${sessionIssuedDate}`,
       );
-
-      // checkTokenValidity();
-      console.debug("[(app)/_layout] Skipping manual token check...");
-
-      // console.debug("[(app)/_layout] Setting access token for Axios...");
-      // setAccessToken(session);
-      console.debug(
-        "[(app)/_layout] Did not manually set access token via layout useEffect",
-      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, sessionExpiry, sessionIssuedDate]);
@@ -79,10 +70,8 @@ export default function RootLayout() {
       ) {
         if (session && sessionExpiry && sessionIssuedDate) {
           console.log(
-            `[(app)/_layout] Attempting token refresh on app state ${appState.current} -> ${nextAppState}`,
+            `[(app)/_layout] Attempting action on app state ${appState.current} -> ${nextAppState}`,
           );
-          // checkTokenValidity();
-          console.debug("[(app)/_layout] skipping manual token check");
         }
       }
 
@@ -143,11 +132,7 @@ export default function RootLayout() {
   }
 
   if (session) {
-    // Set the access token for API requests
-    // setAccessToken(session);
-    console.debug(
-      "[(app)/_layout] Did not manually set access token via layout init",
-    );
+    // Take an action IFF session is present... and valid?
   }
 
   // This layout can be deferred because it's not the root layout.

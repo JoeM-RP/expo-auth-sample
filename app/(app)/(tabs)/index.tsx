@@ -5,12 +5,26 @@ import { Image } from 'expo-image';
 import { Text, View } from '@/components/Themed';
 import { useSession } from '@/store/contexts';
 import Colors from '@/constants/Colors';
-import { blurhash } from '@/utils';
-import { useEffect } from 'react';
+import { blurhash, useRefreshOnFocus } from '@/utils';
+import { useEffect, useState } from 'react';
+import { useQuery } from "@tanstack/react-query";
+import { getProfileInfoAsync } from "@/services/MiddlewareAPIService";
 
 export default function TabOneScreen() {
   const { userInfo, session, signOut } = useSession();
   const token = SecureStore.getItem("accessToken");
+
+  const { isPending, isError, data, error, refetch, isRefetching } = useQuery({
+    queryKey: ["user-details"],
+    queryFn: async ({ signal }) => {
+        const result = await getProfileInfoAsync()
+        console.info(result);
+
+        return [];
+    },
+  })
+
+  useRefreshOnFocus(refetch);
 
   useEffect(() => {
     // console.info(userInfo)
@@ -50,7 +64,7 @@ export default function TabOneScreen() {
         onLoadStart={() => {
         }}
         onError={(e: any) => {
-          console.warn("[(tab)/index] " + e.error + " for URL: " + userInfo?.picture + session ? ". Token set" : ". Token not set");
+          console.warn("[(tab)/index] " + e.error + " for URL: " + userInfo?.picture + `${session ? ". Token set" : ". Token not set"}`);
         }}
       />
       <Text style={styles.title}>Welcome, {userInfo?.name || "user"}</Text>

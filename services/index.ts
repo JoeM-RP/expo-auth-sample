@@ -13,10 +13,9 @@ import axios, {
 import { router } from "expo-router";
 import { TokenResponse } from "expo-auth-session";
 import { setStorageItemAsync } from "@/store/useStorageState";
+import { DEFAULT_WAIT, ERR } from "@/constants/networkConstants";
 
 export const axiosAbortController = new AbortController();
-
-const DEFAULT_WAIT = 5000;
 
 const base = process.env.EXPO_PUBLIC_API_URL;
 
@@ -34,7 +33,7 @@ let fail = 0; // current session 401 failure count
 let refreshInProgress = false;
 
 const axiosInstance = axios.create({
-  baseURL: base + "/api/",
+  baseURL: base,
   timeout: __DEV__ ? 100000 : 60000, // 60 seconds
   headers: { accept: "application/json" },
   signal: axiosAbortController.signal,
@@ -71,7 +70,7 @@ async function axiosSleeprequest(
   msec: number,
 ) {
   console.log("[axios] Waiting to retry " + config?.url);
-  console.log("[axios] token is: " + config?.headers?.Authorization);
+  console.log(`[axios] token is ${config?.headers?.Authorization ? "set" : "not set"}`);
   await sleep(msec);
   console.log(
     `[axios] Waited ${msec} ms, proceeding with request /${config?.url}`,
@@ -186,7 +185,6 @@ axiosInstance.interceptors.request.use(
       console.log(
         "[axios] No authorization header! Expect auth failures for secured APIs",
       );
-      // console.warn(JSON.stringify(config));
 
       // Don't send abort signal here which can cause issues during login
       // axiosAbortController.abort();
@@ -216,12 +214,12 @@ axiosInstance.interceptors.request.use(
 // Add a response interceptor
 axiosInstance.interceptors.response.use(
   async function (response) {
+    // Any status code that lie within the range of 2xx cause this function to trigger
     if (fail > 0) {
       console.debug("[axios] Failure count is reset, was: " + fail);
       fail = 0;
     }
-    // Any status code that lie within the range of 2xx cause this function to trigger
-    // Do something with response data
+    // Do something with response data here before retrunign it, if needed
     return response;
   },
   async function (error: AxiosError) {
@@ -234,6 +232,9 @@ axiosInstance.interceptors.response.use(
     console.log("[axios] Failure count is up, now: " + fail);
     console.debug(`[axios] Response error: ${error.message} (${error.code})`);
 
+    // console.info(error.config?.baseURL + "" + error.config?.url);
+    // console.info(error.config?.headers)
+
     // Fail if we've retried too many times
     if (fail > barrier) {
       console.warn(
@@ -242,21 +243,24 @@ axiosInstance.interceptors.response.use(
 
       axiosAbortController.abort();
 
-      console.warn("[axios] Attempting navigation to sign in screen...");
-
       // Attempt to redirect to sign in - pass the "force" flag to prevent navigating back to
       // home while auth tokens are cleared (which is handled on sign in page to ensure hooks
       // are handled correctly.
+      console.warn("[axios] Attempting navigation to sign in screen...");
       router.replace("/sign-in?force=true");
+
+      // Reset failure count
+      fail = 0
+      console.info("[axios] Resetting failure count after issueing sign-in redirect")
 
       return Promise.reject(error);
     }
 
     // Happens if the abort signal was received
-    if (error.code === "ERR_CANCELED" && error.config) {
+    if (error.code === ERR.CANCELED && error.config) {
       let token = await getAuthTokenAsync();
       let tokenSet;
-      const maxRetry = 5; // 5 retries for a max totoal wait of 20 seconds to refresh
+      const maxRetry = 5; // 5 retries for a max total wait of 20 seconds to refresh
 
       // Crude retry block - don't send a new request until the refreshed token is set
       for (var retry = 0; retry < maxRetry; retry++) {
@@ -274,7 +278,7 @@ axiosInstance.interceptors.response.use(
 
           if (token !== undefined) {
             console.log(
-              `[axios] Erro block - setting updated token for request /${error.config.url}. \t ${printAbridgedTokenInfo(`Bearer ${token}`)}`,
+              `[axios]Error block - setting updated token for request /${error.config.url}. \t ${printAbridgedTokenInfo(`Bearer ${token}`)}`,
             );
             axiosInstance.defaults.headers.common.authorization = `Bearer ${token}`;
             error.config.headers.Authorization = `Bearer ${token}`;
@@ -286,7 +290,7 @@ axiosInstance.interceptors.response.use(
             break;
           } else {
             console.log(
-              "[axios] Erro block - token not set for request /" +
+              "[axios]Error block - token not set for request /" +
                 error.config.url,
             );
           }
@@ -301,14 +305,26 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    // Happens if the route is not found
-    if (error.code === "ERR_BAD_REQUEST" && error_status === 404) {
+    // 400 - Happens if the client sends a bad request
+    if (error.code === ERR.BAD_REQUEST && error_status === 400) {
       console.warn(`[axios] ${error_status} error for /${error.config?.url}.`);
       return Promise.reject(error);
     }
 
-    // Happens for most auth failures (401 or 403)
-    if (error.code === "ERR_BAD_REQUEST" && error.config) {
+    // 404 - Happens if the route is not found
+    if (error.code === ERR.BAD_REQUEST && error_status === 404) {
+      console.warn(`[axios] ${error_status} error for /${error.config?.url}.`);
+      return Promise.reject(error);
+    }
+
+    // 403 - Happens if auth is valid, but not permitted
+    if (error.code === ERR.BAD_REQUEST && error_status === 403) {
+      console.warn(`[axios] ${error_status} error for /${error.config?.url}.`);
+      return Promise.reject(error);
+    }
+
+    // 401 - Happens for if auth is empty or expired
+    if (error.code === ERR.BAD_REQUEST && error_status === 401 && error.config) {
       console.warn(
         `[axios] ${error.response?.status} error for /${error.config?.url}. \t${printAbridgedTokenInfo(error.config.headers.Authorization)}`,
       );
@@ -325,7 +341,7 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    // Last-ditch retry
+    // 40X - Last-ditch retry
     if (error.config) {
       console.warn(
         `[axios] Attempting retry after ${error_status} error: ${error.code}`,
