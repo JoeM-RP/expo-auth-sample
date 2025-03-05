@@ -278,7 +278,7 @@ axiosInstance.interceptors.response.use(
 
           if (token !== undefined) {
             console.log(
-              `[axios]Error block - setting updated token for request /${error.config.url}. \t ${printAbridgedTokenInfo(`Bearer ${token}`)}`,
+              `[axios] Error block - setting updated token for request /${error.config.url}. \t ${printAbridgedTokenInfo(`Bearer ${token}`)}`,
             );
             axiosInstance.defaults.headers.common.authorization = `Bearer ${token}`;
             error.config.headers.Authorization = `Bearer ${token}`;
@@ -290,7 +290,7 @@ axiosInstance.interceptors.response.use(
             break;
           } else {
             console.log(
-              "[axios]Error block - token not set for request /" +
+              "[axios] Error block - token not set for request /" +
                 error.config.url,
             );
           }
