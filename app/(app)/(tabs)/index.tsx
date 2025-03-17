@@ -26,7 +26,7 @@ export default function TabOneScreen() {
     queryKey: ["user-details"],
     queryFn: async ({ signal }) => {
       const result = await getProfileInfoAsync();
-      console.info("result: " + JSON.stringify(result));
+
       return result;
     },
   });
@@ -56,7 +56,6 @@ export default function TabOneScreen() {
   };
 
   const renderItem = (item: any) => {
-    console.info(item);
     return (
       <View style={styles.container}>
         <Image
