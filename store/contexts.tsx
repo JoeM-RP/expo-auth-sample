@@ -41,7 +41,7 @@ const SCOPES =
     process.env.EXPO_PUBLIC_SCOPES ||
     `email offline_access openid profile`;
 
-const ROOT = "https://login.microsoftonline.us";
+const ROOT = "https://login.microsoftonline.com";
 const DISCOVERY_URI = `${ROOT}/${TENANT_ID}/v2.0`;
 const AUTH_ENDPOINT = `${ROOT}/${TENANT_ID}/oauth2/v2.0/authorize`; // fallback auth endpoint in case "discovery" fails
 const TOKEN_ENDPOINT = `${ROOT}/${TENANT_ID}/oauth2/v2.0/token`; // fallback token endpoint in case "discovery" fails
