@@ -19,7 +19,7 @@ export const axiosAbortController = new AbortController();
 
 const base = process.env.EXPO_PUBLIC_API_URL;
 
-const ROOT = "https://login.microsoftonline.us";
+const ROOT = "https://login.microsoftonline.com"; // double check this against the discovery document
 const TENANT_ID = process.env.EXPO_PUBLIC_TENANT_ID || ""; // directory id
 const CLIENT_ID = process.env.EXPO_PUBLIC_CLIENT_ID || ""; // application id
 const SCOPES =
