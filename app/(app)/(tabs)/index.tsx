@@ -56,12 +56,13 @@ export default function TabOneScreen() {
   };
 
   const renderItem = (item: any) => {
+    const img = "https://graph.microsoft.com/v1.0/me/photo/$value";
     return (
       <View style={styles.container}>
         <Image
           style={styles.image}
           source={{
-            uri: userInfo?.picture,
+            uri: img,
             headers: {
               Authorization: `Bearer ${session}`,
             },
@@ -71,11 +72,7 @@ export default function TabOneScreen() {
           transition={1000}
           onError={(e: any) => {
             console.warn(
-              "[(tab)/index] " +
-                e.error +
-                " for URL: " +
-                userInfo?.picture +
-                `${session ? ". Token set" : ". Token not set"}`
+              `[(tab)/index] ${e.error} for URL: ${img}. ${session ? " Token set" : ". Token not set"}`
             );
           }}
         />
@@ -87,13 +84,12 @@ export default function TabOneScreen() {
         />
 
         <Text style={styles.info}>
-          {"title: " + item?.jobTitle || "title"}
+          {item?.jobTitle || "title"}
         </Text>
         <Text style={styles.info}>
-          {"location: " + item?.officeLocation || "location"}
+          {item?.officeLocation || "location"}
         </Text>
         <Text style={styles.info}>
-          {"email:" + " "}
           <Text lightColor={Colors.light.tint} onPress={() => onEmailTapped()}>
             {item?.mail || "email"}
           </Text>

@@ -305,12 +305,6 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    // 400 - Happens if the client sends a bad request
-    if (error.code === ERR.BAD_REQUEST && error_status === 400) {
-      console.warn(`[axios] ${error_status} error for /${error.config?.url}.`);
-      return Promise.reject(error);
-    }
-
     // 404 - Happens if the route is not found
     if (error.code === ERR.BAD_REQUEST && error_status === 404) {
       console.warn(`[axios] ${error_status} error for /${error.config?.url}.`);
@@ -339,6 +333,12 @@ axiosInstance.interceptors.response.use(
         );
         await axiosRefeshTokenManually();
       }
+    }
+
+    // 400 - Happens if the client sends a bad request
+    if (error.code === ERR.BAD_REQUEST && error_status === 400) {
+      console.warn(`[axios] ${error_status} error for /${error.config?.url}.`);
+      return Promise.reject(error);
     }
 
     // 40X - Last-ditch retry
