@@ -44,7 +44,7 @@ const logAPIError = (error: any, route?: string | undefined) => {
 };
 
 export async function getProfileInfoAsync(): Promise<any> {
-  const route = "v1.0/me/photo/$value";
+  const route = "v1.0/me";
   try {
     const response = await axiosInstance.get(route);
     return response.data;
